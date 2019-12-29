@@ -1,4 +1,13 @@
 /*
+ * server.js
+ *
+ * Name: Toan Minh Do
+ * CS 453 - HW4
+ * November 1st, 2019
+ * Dr. Xuechan Zhang
+ */
+
+/*
  * Homework 4 (CS 453)
  * ---------------------------
  *
@@ -10,7 +19,6 @@
  * While completing this assignment, be sure to use Mozilla Developer Network's
  * [JavaScript Reference](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference).
  */
-
 
 const express = require('express');
 const path = require('path');
@@ -27,7 +35,7 @@ app.use(express.static('public'));
 
 let db = null;
 let collection = null;
-var cardId;
+
 /*
  * Complete the startDbAndServer function, which connects to the MongoDB
  * server and creates a Node web server listening to port 3000.
@@ -38,7 +46,6 @@ async function startDbAndServer() {
     
     await app.listen(3000);
     console.log('It is on 3000');
-
 };
 
 startDbAndServer();
@@ -57,15 +64,17 @@ startDbAndServer();
  * 'res' is the response which contains a json object. 
  */
 async function onSaveCard(req, res) {
-    const newCard = req.body;
-    const response = await collection.insert(newCard, function(err, docsInserted){
-    	if (err) return;
-    	console.log(docsInserted);
-    });
-    cardId = newCard._id;
-    res.json({ success: true });
-    console.log(cardId);
-    return cardId;
+    const style = req.body.style;
+    const message = req.body.message;
+
+    const newCard = {
+    	style: style,
+    	message: message
+    };
+
+    const response = await collection.insertOne(newCard);
+    //console.log({response.insertedId});
+    await res.json({cardId: response.insertedId});
 }	
 app.post('/save', jsonParser, onSaveCard);
 
@@ -82,14 +91,9 @@ app.post('/save', jsonParser, onSaveCard);
  */ 
 
 async function onGetCard(req, res) {
-    const card = req.params;
-    console.log(card);
-    const result = await collection.findOne(card);
-    console.log(result);
-    const response = {
-    	style: result ? result.style : ''
-    };
-    res.json(response);
+	const cardId = req.params.cardId;
+	const response = await collection.findOne({_id: ObjectID(cardId)});
+	await res.json({message: response.message, style: response.style});
 }
 app.get('/get/:cardId', onGetCard);
 
